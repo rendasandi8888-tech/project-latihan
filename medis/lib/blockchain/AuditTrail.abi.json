@@ -1,0 +1,148 @@
+[
+  {
+    "inputs": [
+      { "internalType": "address", "name": "_userRegistry", "type": "address" },
+      { "internalType": "address", "name": "_medicalRecord", "type": "address" }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "entryId", "type": "uint256" },
+      { "indexed": false, "internalType": "string", "name": "action", "type": "string" },
+      { "indexed": true, "internalType": "address", "name": "performedBy", "type": "address" },
+      { "indexed": true, "internalType": "uint256", "name": "targetRecordId", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+    ],
+    "name": "ActionLogged",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "action", "type": "string" },
+      { "internalType": "uint256", "name": "targetRecordId", "type": "uint256" },
+      { "internalType": "address", "name": "targetUser", "type": "address" },
+      { "internalType": "string", "name": "details", "type": "string" }
+    ],
+    "name": "logAction",
+    "outputs": [{ "internalType": "uint256", "name": "entryId", "type": "uint256" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "from", "type": "uint256" },
+      { "internalType": "uint256", "name": "to", "type": "uint256" }
+    ],
+    "name": "getAuditLog",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "id", "type": "uint256" },
+          { "internalType": "string", "name": "action", "type": "string" },
+          { "internalType": "address", "name": "performedBy", "type": "address" },
+          { "internalType": "uint256", "name": "targetRecordId", "type": "uint256" },
+          { "internalType": "address", "name": "targetUser", "type": "address" },
+          { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+          { "internalType": "string", "name": "department", "type": "string" },
+          { "internalType": "string", "name": "details", "type": "string" }
+        ],
+        "internalType": "struct AuditTrail.AuditEntry[]",
+        "name": "entries",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "userAddress", "type": "address" }],
+    "name": "getUserAuditLog",
+    "outputs": [{ "internalType": "uint256[]", "name": "", "type": "uint256[]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "recordId", "type": "uint256" }],
+    "name": "getRecordAuditLog",
+    "outputs": [{ "internalType": "uint256[]", "name": "", "type": "uint256[]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "entryId", "type": "uint256" }],
+    "name": "getEntry",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "id", "type": "uint256" },
+          { "internalType": "string", "name": "action", "type": "string" },
+          { "internalType": "address", "name": "performedBy", "type": "address" },
+          { "internalType": "uint256", "name": "targetRecordId", "type": "uint256" },
+          { "internalType": "address", "name": "targetUser", "type": "address" },
+          { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+          { "internalType": "string", "name": "department", "type": "string" },
+          { "internalType": "string", "name": "details", "type": "string" }
+        ],
+        "internalType": "struct AuditTrail.AuditEntry",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTotalEntries",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "count", "type": "uint256" }],
+    "name": "getLatestEntries",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "id", "type": "uint256" },
+          { "internalType": "string", "name": "action", "type": "string" },
+          { "internalType": "address", "name": "performedBy", "type": "address" },
+          { "internalType": "uint256", "name": "targetRecordId", "type": "uint256" },
+          { "internalType": "address", "name": "targetUser", "type": "address" },
+          { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+          { "internalType": "string", "name": "department", "type": "string" },
+          { "internalType": "string", "name": "details", "type": "string" }
+        ],
+        "internalType": "struct AuditTrail.AuditEntry[]",
+        "name": "entries",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "medicalRecordContract",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalEntries",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "userRegistry",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

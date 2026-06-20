@@ -1,0 +1,193 @@
+[
+  {
+    "inputs": [{ "internalType": "address", "name": "_userRegistry", "type": "address" }],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "recordId", "type": "uint256" },
+      { "indexed": true, "internalType": "address", "name": "grantedTo", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "grantedBy", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+    ],
+    "name": "AccessGranted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "recordId", "type": "uint256" },
+      { "indexed": true, "internalType": "address", "name": "revokedFrom", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "revokedBy", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+    ],
+    "name": "AccessRevoked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "recordId", "type": "uint256" },
+      { "indexed": true, "internalType": "address", "name": "uploadedBy", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "patientAddress", "type": "address" },
+      { "indexed": false, "internalType": "string", "name": "department", "type": "string" },
+      { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+    ],
+    "name": "RecordUploaded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "recordId", "type": "uint256" },
+      { "indexed": true, "internalType": "address", "name": "verifiedBy", "type": "address" },
+      { "indexed": false, "internalType": "bool", "name": "isValid", "type": "bool" },
+      { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+    ],
+    "name": "RecordVerified",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "recordId", "type": "uint256" },
+      { "internalType": "string", "name": "department", "type": "string" }
+    ],
+    "name": "grantDepartmentAccess",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "recordId", "type": "uint256" },
+      { "internalType": "address", "name": "doctorAddress", "type": "address" }
+    ],
+    "name": "grantAccess",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "recordId", "type": "uint256" },
+      { "internalType": "address", "name": "doctorAddress", "type": "address" }
+    ],
+    "name": "revokeAccess",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "recordId", "type": "uint256" }],
+    "name": "getRecord",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "id", "type": "uint256" },
+          { "internalType": "address", "name": "patientAddress", "type": "address" },
+          { "internalType": "string", "name": "encryptedPatientName", "type": "string" },
+          { "internalType": "string", "name": "encryptedPatientId", "type": "string" },
+          { "internalType": "string", "name": "encryptedBirthDate", "type": "string" },
+          { "internalType": "string", "name": "modality", "type": "string" },
+          { "internalType": "string", "name": "bodyPart", "type": "string" },
+          { "internalType": "uint256", "name": "studyDate", "type": "uint256" },
+          { "internalType": "string", "name": "department", "type": "string" },
+          { "internalType": "address", "name": "uploadedBy", "type": "address" },
+          { "internalType": "string", "name": "dicomCID", "type": "string" },
+          { "internalType": "string", "name": "keyEnvelopeCID", "type": "string" },
+          { "internalType": "string", "name": "fileHash", "type": "string" },
+          { "internalType": "uint256", "name": "uploadedAt", "type": "uint256" },
+          { "internalType": "bool", "name": "isActive", "type": "bool" }
+        ],
+        "internalType": "struct MedicalRecord.Record",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "patientAddress", "type": "address" }],
+    "name": "getPatientRecords",
+    "outputs": [{ "internalType": "uint256[]", "name": "", "type": "uint256[]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "string", "name": "department", "type": "string" }],
+    "name": "getDepartmentRecords",
+    "outputs": [{ "internalType": "uint256[]", "name": "", "type": "uint256[]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "recordId", "type": "uint256" },
+      { "internalType": "address", "name": "userAddress", "type": "address" }
+    ],
+    "name": "hasAccess",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "recordId", "type": "uint256" },
+      { "internalType": "string", "name": "fileHash", "type": "string" }
+    ],
+    "name": "verifyRecord",
+    "outputs": [{ "internalType": "bool", "name": "isValid", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "recordId", "type": "uint256" }],
+    "name": "getPublicRecordInfo",
+    "outputs": [
+      { "internalType": "string", "name": "modality", "type": "string" },
+      { "internalType": "uint256", "name": "studyDate", "type": "uint256" },
+      { "internalType": "string", "name": "department", "type": "string" },
+      { "internalType": "address", "name": "uploadedBy", "type": "address" },
+      { "internalType": "uint256", "name": "uploadedAt", "type": "uint256" },
+      { "internalType": "bool", "name": "isActive", "type": "bool" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "patientAddress", "type": "address" },
+      { "internalType": "string", "name": "encryptedPatientName", "type": "string" },
+      { "internalType": "string", "name": "encryptedPatientId", "type": "string" },
+      { "internalType": "string", "name": "encryptedBirthDate", "type": "string" },
+      { "internalType": "string", "name": "modality", "type": "string" },
+      { "internalType": "string", "name": "bodyPart", "type": "string" },
+      { "internalType": "uint256", "name": "studyDate", "type": "uint256" },
+      { "internalType": "string", "name": "department", "type": "string" },
+      { "internalType": "string", "name": "dicomCID", "type": "string" },
+      { "internalType": "string", "name": "keyEnvelopeCID", "type": "string" },
+      { "internalType": "string", "name": "fileHash", "type": "string" }
+    ],
+    "name": "uploadRecord",
+    "outputs": [{ "internalType": "uint256", "name": "recordId", "type": "uint256" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalRecords",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "userRegistry",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
