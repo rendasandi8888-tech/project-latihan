@@ -1,99 +1,140 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useActiveAccount } from 'thirdweb/react'
-import { uploadRecord, getRecord, getPatientRecords, grantDepartmentAccess, revokeUser } from '@/lib/blockchain/contracts' // Note: revokeAccess might be a different function depending on the exact contract method, mocked as revokeUser or a generic revoke for now
-import { toastLoading, toastSuccess, toastError, toastBlockchain } from '@/lib/utils'
+import {
+  getRecord,
+  getPatientRecords,
+  uploadRecord as uploadRecordToChain,
+  grantDepartmentAccess,
+  grantAccess,
+  revokeRecordAccess,
+  hasRecordAccess,
+  getUserProfile,
+  type MedicalRecordData,
+  type UploadRecordParams,
+} from '@/lib/blockchain/contracts'
+import { writeAuditLog } from '@/lib/audit-client'
+import { toastLoading, toastError, toastBlockchain } from '@/lib/utils'
 
 export function useMedicalRecord(recordId?: string) {
   const account = useActiveAccount()
-  const [record, setRecord] = useState<any>(null)
-  const [records, setRecords] = useState<any[]>([])
+  const [record, setRecord] = useState<MedicalRecordData | null>(null)
+  const [records, setRecords] = useState<MedicalRecordData[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const [hasAccess, setHasAccess] = useState(false)
 
-  const fetchRecord = async (id: string) => {
-    if (!id) return
-    setIsLoading(true)
-    setError(null)
+  const getDept = async (address: string) => {
     try {
-      // Dummy check or actual smart contract call
-      // const data = await getRecord(id)
-      await new Promise(res => setTimeout(res, 800))
-      const data = { id, data: "Mocked Record Data" } // Mock
+      const p = await getUserProfile(address)
+      return p?.department || 'Unknown'
+    } catch { return 'Unknown' }
+  }
+
+  const fetchRecord = async (id: string) => {
+    if (!id || !account) return
+    setIsLoading(true); setError(null)
+    try {
+      const access = await hasRecordAccess(Number(id), account.address)
+      setHasAccess(access)
+      if (!access) { setError(new Error('No access to this record')); return }
+      const data = await getRecord(Number(id))
       setRecord(data)
-      setHasAccess(true)
+      const dept = await getDept(account.address)
+      await writeAuditLog({ action: 'VIEW', performedBy: account.address, targetRecordId: Number(id), targetUser: data?.patientAddress, department: dept, details: `Viewed record #${id}` })
     } catch (err) {
       setError(err as Error)
       setHasAccess(false)
-    } finally {
-      setIsLoading(false)
-    }
+      toastError('Failed to fetch record', err as Error)
+    } finally { setIsLoading(false) }
   }
 
   const fetchPatientRecords = async (patientAddress: string) => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true); setError(null)
     try {
-      await new Promise(res => setTimeout(res, 800))
-      // const data = await getPatientRecords(patientAddress)
-      setRecords([]) // Mock empty array or mock data
+      const data = await getPatientRecords(patientAddress)
+      setRecords(data)
     } catch (err) {
       setError(err as Error)
-    } finally {
-      setIsLoading(false)
-    }
+      toastError('Failed to fetch records', err as Error)
+    } finally { setIsLoading(false) }
   }
 
-  const uploadNewRecord = async (recordData: any) => {
-    if (!account) throw new Error("Wallet not connected")
+  const uploadNewRecord = async (params: UploadRecordParams): Promise<{ recordId: number; txHash: string }> => {
+    if (!account) throw new Error('Wallet not connected')
     setIsLoading(true)
     try {
-      toastLoading("Uploading to IPFS and Monad Testnet...")
-      // const txHash = await uploadRecord(recordData, account)
-      await new Promise(res => setTimeout(res, 1500))
-      const txHash = "0x" + Math.random().toString(16).substring(2, 40)
-      toastBlockchain("Record uploaded successfully", txHash)
-      return txHash
+      toastLoading('Recording on Monad Testnet...')
+      const result = await uploadRecordToChain(params, account)
+      toastBlockchain(`Record #${result.recordId} saved`, result.txHash)
+      const dept = await getDept(account.address)
+      await writeAuditLog({
+        action: 'UPLOAD',
+        performedBy: account.address,
+        targetRecordId: result.recordId,
+        targetUser: params.patientAddress,
+        department: dept,
+        details: `Uploaded ${params.modality} - ${params.bodyPart} to IPFS+Blockchain. TX: ${result.txHash.slice(0, 10)}...`,
+      })
+      return result
     } catch (err) {
-      toastError("Failed to upload record", err as Error)
+      toastError('Failed to record on blockchain', err as Error)
       throw err
-    } finally {
-      setIsLoading(false)
-    }
+    } finally { setIsLoading(false) }
   }
 
-  const grantAccess = async (recId: string, department: string) => {
-    if (!account) throw new Error("Wallet not connected")
+  const grantAccessToUser = async (recId: string, doctorAddress: string): Promise<string> => {
+    if (!account) throw new Error('Wallet not connected')
+    setIsLoading(true)
+    try {
+      toastLoading('Granting access...')
+      const txHash = await grantAccess(Number(recId), doctorAddress, account)
+      toastBlockchain('Access granted', txHash)
+      const dept = await getDept(account.address)
+      await writeAuditLog({ action: 'GRANT_ACCESS', performedBy: account.address, targetRecordId: Number(recId), targetUser: doctorAddress, department: dept, details: `Granted access to record #${recId}` })
+      return txHash
+    } catch (err) {
+      toastError('Failed to grant access', err as Error)
+      throw err
+    } finally { setIsLoading(false) }
+  }
+
+  const grantDepartmentAccessToRecord = async (recId: string, department: string): Promise<string> => {
+    if (!account) throw new Error('Wallet not connected')
     setIsLoading(true)
     try {
       toastLoading(`Granting ${department} access...`)
-      // const txHash = await grantDepartmentAccess(recId, department, account)
-      await new Promise(res => setTimeout(res, 1000))
-      const txHash = "0x" + Math.random().toString(16).substring(2, 40)
-      toastBlockchain("Access granted", txHash)
+      const txHash = await grantDepartmentAccess(Number(recId), department, account)
+      toastBlockchain('Department access granted', txHash)
+      const dept = await getDept(account.address)
+      await writeAuditLog({ action: 'GRANT_ACCESS', performedBy: account.address, targetRecordId: Number(recId), targetUser: '0x0000000000000000000000000000000000000000', department: dept, details: `Granted department access: ${department} to record #${recId}` })
       return txHash
     } catch (err) {
-      toastError("Failed to grant access", err as Error)
+      toastError('Failed to grant department access', err as Error)
       throw err
-    } finally {
-      setIsLoading(false)
-    }
+    } finally { setIsLoading(false) }
   }
 
-  // Auto fetch if recordId provided
-  // useEffect(() => { if (recordId) fetchRecord(recordId) }, [recordId])
+  const revokeAccess = async (recId: string, doctorAddress: string): Promise<string> => {
+    if (!account) throw new Error('Wallet not connected')
+    setIsLoading(true)
+    try {
+      toastLoading('Revoking access...')
+      const txHash = await revokeRecordAccess(Number(recId), doctorAddress, account)
+      toastBlockchain('Access revoked', txHash)
+      const dept = await getDept(account.address)
+      await writeAuditLog({ action: 'REVOKE_ACCESS', performedBy: account.address, targetRecordId: Number(recId), targetUser: doctorAddress, department: dept, details: `Revoked access to record #${recId}` })
+      return txHash
+    } catch (err) {
+      toastError('Failed to revoke access', err as Error)
+      throw err
+    } finally { setIsLoading(false) }
+  }
 
   return {
-    record,
-    records,
-    isLoading,
-    error,
-    hasAccess,
-    fetchRecord,
-    fetchPatientRecords,
-    uploadNewRecord,
-    grantAccess
+    record, records, isLoading, error, hasAccess,
+    fetchRecord, fetchPatientRecords, uploadNewRecord,
+    grantAccessToUser, grantDepartmentAccessToRecord, revokeAccess,
   }
 }

@@ -1,110 +1,118 @@
 ﻿'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useActiveAccount, useDisconnect, useActiveWallet } from 'thirdweb/react'
 import { useRole } from '@/hooks/useRole'
-import {
-  LayoutDashboard, Users, ShieldCheck, ClipboardList,
-  Upload, FileText, User, Activity, ChevronRight
-} from 'lucide-react'
+import { LayoutDashboard, Users, History, UserCircle, Upload, ShieldCheck, LogOut, Shield } from 'lucide-react'
 
-const NAV: Record<string, { href: string; label: string; icon: any }[]> = {
+type MenuItem = { href: string; label: string; icon: typeof LayoutDashboard }
+
+const MENU_ITEMS: Record<string, MenuItem[]> = {
   ADMIN: [
-    { href: '/admin',        label: 'Dashboard',      icon: LayoutDashboard },
-    { href: '/admin/users',  label: 'Manage Users',   icon: Users },
-    { href: '/admin/access', label: 'Access Control', icon: ShieldCheck },
-    { href: '/audit-trail',  label: 'Audit Trail',    icon: ClipboardList },
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/users', label: 'User Management', icon: Users },
+    { href: '/admin/access', label: 'Access Management', icon: ShieldCheck },
+    { href: '/audit-trail', label: 'Audit Trail', icon: History },
+    { href: '/profile', label: 'Profile', icon: UserCircle },
   ],
   DOCTOR: [
-    { href: '/doctor',         label: 'Dashboard',       icon: LayoutDashboard },
-    { href: '/doctor/records', label: 'Patient Records', icon: FileText },
-    { href: '/audit-trail',    label: 'Audit Trail',     icon: ClipboardList },
-    { href: '/profile',        label: 'Profile',         icon: User },
+    { href: '/doctor', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/doctor/records', label: 'My Patients', icon: Users },
+    { href: '/audit-trail', label: 'Audit Trail', icon: History },
+    { href: '/profile', label: 'Profile', icon: UserCircle },
   ],
   STAFF: [
-    { href: '/staff',        label: 'Dashboard',     icon: LayoutDashboard },
+    { href: '/staff', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/staff/upload', label: 'Upload Record', icon: Upload },
-    { href: '/audit-trail',  label: 'Audit Trail',   icon: ClipboardList },
-    { href: '/profile',      label: 'Profile',       icon: User },
+    { href: '/audit-trail', label: 'Audit Trail', icon: History },
+    { href: '/profile', label: 'Profile', icon: UserCircle },
   ],
-  UNREGISTERED: [],
+  PATIENT: [
+    { href: '/patient', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/profile', label: 'Profile', icon: UserCircle },
+  ],
+}
+
+function maskAddress(address?: string) {
+  if (!address) return ''
+  return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { role, userProfile, isLoading } = useRole()
-  const items = NAV[role] ?? []
+  const router = useRouter()
+  const { role, isLoading } = useRole()
+  const account = useActiveAccount()
+  const wallet = useActiveWallet()
+  const { disconnect } = useDisconnect()
+  const menuItems = MENU_ITEMS[role] ?? []
 
-  const roleColor: Record<string, string> = {
-    ADMIN: 'text-purple-600 bg-purple-50',
-    DOCTOR: 'text-blue-600 bg-blue-50',
-    STAFF: 'text-emerald-600 bg-emerald-50',
+  const handleDisconnect = () => {
+    if (wallet) disconnect(wallet)
+    router.push('/')
   }
 
   return (
-    <aside className="fixed left-0 top-0 w-[220px] h-screen bg-white border-r border-gray-100 flex flex-col z-40">
-      {/* Logo */}
-      <div className="px-5 py-4 border-b border-gray-100">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#185FA5] flex items-center justify-center flex-shrink-0">
-            <Activity className="w-4 h-4 text-white" />
-          </div>
-          <div className="min-w-0">
-            <p className="font-semibold text-gray-900 text-xs leading-none truncate">MediChain</p>
-            <p className="text-[10px] text-gray-400 mt-0.5 truncate">Radiology System</p>
-          </div>
+    <aside className="w-[220px] h-screen fixed left-0 top-0 bg-white border-r border-gray-100 flex flex-col z-20">
+      <div className="flex items-center gap-2.5 px-5 py-5">
+        <div className="w-8 h-8 rounded-lg bg-[#185FA5] flex items-center justify-center shrink-0">
+          <Shield className="w-4 h-4 text-white" />
+        </div>
+        <div className="min-w-0">
+          <p className="font-semibold text-gray-900 text-sm leading-none truncate">MediChain</p>
+          <p className="text-[11px] text-gray-400 leading-none mt-1 truncate">Radiology</p>
         </div>
       </div>
 
-      {/* Nav */}
+      <div className="h-px bg-gray-100 mx-3" />
+
       <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
         {isLoading ? (
-          <div className="flex flex-col gap-1.5 mt-2">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-9 bg-gray-100 rounded-lg animate-pulse" style={{ opacity: 1 - i * 0.15 }} />
+          <div className="space-y-1 px-1">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="h-8 bg-gray-100 rounded-md animate-pulse" />
             ))}
           </div>
-        ) : items.length === 0 ? (
-          <p className="text-xs text-gray-400 px-3 py-3">No menu available</p>
-        ) : items.map(item => {
-          const Icon = item.icon
-          const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/'))
-          return (
-            <Link key={item.href} href={item.href}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all group ${
-                active
-                  ? 'bg-[#185FA5] text-white shadow-sm shadow-[#185FA5]/20'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              <span className="flex-1 font-medium">{item.label}</span>
-              {active && <ChevronRight className="w-3 h-3 opacity-60" />}
-            </Link>
-          )
-        })}
+        ) : menuItems.length === 0 ? (
+          <p className="text-xs text-gray-400 px-3 py-2">No menu available</p>
+        ) : (
+          menuItems.map((item) => {
+            const isActive = pathname === item.href ||
+              (item.href !== '/admin' && item.href !== '/doctor' && item.href !== '/staff' && item.href !== '/patient' && pathname.startsWith(item.href))
+            const Icon = item.icon
+            return (
+              <Link key={item.href} href={item.href}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors ${
+                  isActive ? 'bg-[#E6F1FB] text-[#185FA5] font-medium' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Icon className="w-[18px] h-[18px] shrink-0" />
+                <span className="truncate">{item.label}</span>
+              </Link>
+            )
+          })
+        )}
       </nav>
 
-      {/* User card */}
-      <div className="px-3 py-3 border-t border-gray-100">
-        {userProfile ? (
-          <div className="px-3 py-2.5 rounded-lg bg-gray-50 space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold text-gray-800 truncate">{userProfile.name || 'User'}</p>
-              <span className={`badge text-[10px] flex-shrink-0 ${roleColor[role] || 'bg-gray-100 text-gray-500'}`}>
-                {role}
-              </span>
-            </div>
-            <p className="text-[10px] text-gray-400 truncate">{userProfile.department}</p>
-            <p className="text-[10px] text-gray-300 font-mono truncate">
-              {userProfile.address.slice(0, 10)}...{userProfile.address.slice(-6)}
-            </p>
-          </div>
-        ) : (
-          <div className="px-3 py-2.5 rounded-lg bg-gray-50">
-            <p className="text-[10px] text-gray-400">Wallet not connected</p>
+      <div className="h-px bg-gray-100 mx-3" />
+
+      <div className="px-3 py-3 space-y-1.5">
+        {account?.address && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-gray-50">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#1D9E75] shrink-0" />
+            <span className="text-xs font-mono text-gray-600 truncate">{maskAddress(account.address)}</span>
           </div>
         )}
+        <div className="flex items-center gap-2 px-3 py-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#185FA5] shrink-0" />
+          <span className="text-[11px] text-gray-400">Monad Testnet</span>
+        </div>
+        <button onClick={handleDisconnect}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-[#A32D2D] hover:bg-red-50 transition-colors">
+          <LogOut className="w-[18px] h-[18px]" />
+          Disconnect
+        </button>
       </div>
     </aside>
   )
