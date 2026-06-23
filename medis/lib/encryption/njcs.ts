@@ -1,4 +1,4 @@
-export interface NJCSParams {
+﻿export interface NJCSParams {
   x0: number
   y0: number
   z0: number
@@ -42,12 +42,12 @@ function dy(z: number): number {
 }
 
 function dz(x: number, y: number, z: number, a: number, b: number, c: number): number {
-  // dz/dt = -az - by - x + c·sin(x)
+  // dz/dt = -az - by - x + cÂ·sin(x)
   return -a * z - b * y - x + c * Math.sin(x);
 }
 
 function dw(x: number, z: number, w: number, d: number): number {
-  // dw/dt = x·z - d·w
+  // dw/dt = xÂ·z - dÂ·w
   return x * z - d * w;
 }
 
@@ -274,7 +274,32 @@ export function generateAttractorTrajectory(
 
 // Fungsi 11: Compute Lyapunov exponents
 export function computeLyapunovExponents(params: NJCSParams): number[] {
-  return [0.23, 0.11, -0.45, -0.89];
+  const N = 2000
+  const dt = params.dt
+  const eps = 1e-6
+  let s = { x: params.x0, y: params.y0, z: params.z0, w: params.w0 }
+  let d = [
+    { x: params.x0 + eps, y: params.y0, z: params.z0, w: params.w0 },
+    { x: params.x0, y: params.y0 + eps, z: params.z0, w: params.w0 },
+    { x: params.x0, y: params.y0, z: params.z0 + eps, w: params.w0 },
+    { x: params.x0, y: params.y0, z: params.z0, w: params.w0 + eps },
+  ]
+  const lyap = [0, 0, 0, 0]
+  for (let i = 0; i < N; i++) {
+    s = njcsStep(s, params)
+    d = d.map(di => njcsStep(di, params))
+    for (let j = 0; j < 4; j++) {
+      const dx = d[j].x - s.x, dy = d[j].y - s.y
+      const dz = d[j].z - s.z, dw = d[j].w - s.w
+      const dist = Math.sqrt(dx*dx + dy*dy + dz*dz + dw*dw)
+      if (dist > 0) {
+        lyap[j] += Math.log(dist / eps)
+        const scale = eps / dist
+        d[j] = { x: s.x + dx*scale, y: s.y + dy*scale, z: s.z + dz*scale, w: s.w + dw*scale }
+      }
+    }
+  }
+  return lyap.map(l => parseFloat((l / (N * dt)).toFixed(4)))
 }
 
 // Fungsi 12: Hash file
@@ -296,3 +321,4 @@ export async function verifyFileIntegrity(
 export function generateAESKeyFromNJCS(params: NJCSParams): Uint8Array {
   return generateKeystream(params, 32);
 }
+
